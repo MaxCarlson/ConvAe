@@ -31,30 +31,25 @@ def load_mnist(path, kind='train'):
 
     with gzip.open(images_path, 'rb') as imgpath:
         images = np.frombuffer(imgpath.read(), dtype=np.uint8,
-                               offset=16).reshape(len(labels), 784)
+                               offset=16).reshape(len(labels), 28, 28, 1)
 
     return np.copy(images), np.copy(labels)
 
 trainX, trainY = load_mnist('data', kind='train')
 testX, testY = load_mnist('data', kind='t10k')
 
-#trainX.setflags(write=1)
-#testX.setflags(write=1)
-
 trainX = np.divide(trainX, 255)
 testX = np.divide(testX, 255)
 
 def addBlock(model, filters, kernel, encoder=True):
     model.add(layers.Conv2D(filters, kernel, padding='same') if encoder
-              else layers.Conv2DTranspose(filters, kernel, padding='same'))
+              else layers.Conv2D(filters, kernel, padding='same'))
     model.add(layers.ReLU())
     model.add(layers.MaxPool2D(padding='same') if encoder 
               else layers.UpSampling2D())
 
 model = models.Sequential()
-model.add(layers.Input((784,1)))
-#model.add(layers.Dense(28))
-model.add(layers.Reshape((28,28,1)))
+model.add(layers.Input((28,28,1)))
 addBlock(model, 32, (5,5))
 addBlock(model, 16, (3,3))
 addBlock(model, 8, (2,2))
@@ -66,7 +61,7 @@ model.add(layers.Reshape((2,2,1)))
 addBlock(model, 8, (2,2), False)
 addBlock(model, 16, (3,3), False)
 addBlock(model, 32, (5,5), False)
-model.add(layers.Reshape((784,1)))
+model.add(layers.Conv2D(1, (1,1)))
 model.add(layers.Activation(K.activations.sigmoid))
 
 model.compile(optimizer=K.optimizers.Adam(learning_rate=0.001), 
