@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 *.gz
 /ConvAe/models/m
+*.png
+/ConvAe/models/noise
