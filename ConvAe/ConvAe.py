@@ -7,8 +7,8 @@ from keras import models, layers
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
+#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 config = ConfigProto()
 config.gpu_options.allow_growth = True
@@ -53,8 +53,8 @@ def addNoise(x):
 trainXn = addNoise(trainX)
 testXn = addNoise(testX)
 
-plt.imshow(np.reshape(testX[3], (28,28)), cmap='gray')
-plt.show()
+#plt.imshow(np.reshape(testX[3], (28,28)), cmap='gray')
+#plt.show()
 
 input = K.Input(shape=(28, 28, 1))
 
@@ -75,7 +75,7 @@ x = layers.Flatten()(x)
 x = layers.Dense(4)(x)
 x = layers.Activation('relu')(x)
 x = layers.BatchNormalization()(x)
-encoded = layers.Dense(2)(x)
+encoded = layers.Dense(2, name='encoder')(x)
 x = layers.Dense(4)(encoded)
 x = layers.Activation('relu')(x)
 x = layers.BatchNormalization()(x)
@@ -97,6 +97,7 @@ x = layers.UpSampling2D((2, 2))(x)
 decoded = layers.Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
 
 model = K.Model(input, decoded)
+modelEncoded = K.Model(model.input, model.get_layer('encoder').output)
 
 
 model.summary()
@@ -108,7 +109,7 @@ model.compile(optimizer=K.optimizers.Adam(learning_rate=0.001),
 
 stopping = K.callbacks.EarlyStopping(
         monitor="val_loss",
-        patience=75,
+        patience=40,
         mode="auto",
         baseline=None,
         min_delta=0.0005,
@@ -116,15 +117,37 @@ stopping = K.callbacks.EarlyStopping(
 
 # Training
 #
+epochs = 750
 batchSize = 2048
-#hist = model.fit(trainXn, trainX, batchSize, 750, validation_data=(testXn, testX), 
+
+#model = K.models.load_model('models/m')
+#model = K.models.load_model('models/noise')
+
+#hist = model.fit(trainXn, trainX, batchSize, epochs, validation_data=(testXn, testX), 
 #                 callbacks=[stopping])
 
-#hist = model.fit(trainX, trainX, batchSize, 750, validation_data=(testX, testX), 
-#                 callbacks=[stopping])
+hist = model.fit(trainX, trainX, batchSize, epochs, validation_data=(testX, testX), 
+                 callbacks=[stopping])
+
+#model.save('models/m')
+modelEncoded.save('models/m/encoder')
 #model.save('models/noise')
-#model = K.models.load_model('models/m')
-model = K.models.load_model('models/noise')
+
+
+out = modelEncoded.predict(testX)
+
+# Plot encoded representation
+colormap = np.array(['b', 'g', 'r', 'c', 'm', 'y', 'k', 'brown', 'orange', 'pink'])
+plt.scatter(out[:,0], out[:,1], c=colormap[testY])
+
+import matplotlib.patches as mpatches
+classes = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandel', 'Shirt', 
+                    'Sneaker', 'Bag', 'Ankle boot']
+patches = [mpatches.Patch(color=c, label=l) for c,l in zip(colormap, classes)]
+plt.legend(handles=patches)
+plt.show()
+
+
 
 
 def plotLoss(name, history):
@@ -154,19 +177,19 @@ testCount = 4
 #                                   (28,28)), cmap='gray')
 
 # Reconstructed noise images
-out = model.predict(testXn[idxs])
-fig, axs = plt.subplots(3, testCount)
-for i in range(3):
-    for ji, j in enumerate(idxs):
-        if i == 0:
-            axs[i,ji].imshow(np.reshape(testX[j], (28,28)), cmap='gray')
-        elif i == 1:
-            axs[i,ji].imshow(np.reshape(testXn[j], (28,28)), cmap='gray')
-        else:
-            axs[i,ji].imshow(np.reshape(out[ji], (28,28)), cmap='gray')
-
-plt.show()
-plt.savefig('recon_noise.jpg')
+#out = model.predict(testXn[idxs])
+#fig, axs = plt.subplots(3, testCount)
+#for i in range(3):
+#    for ji, j in enumerate(idxs):
+#        if i == 0:
+#            axs[i,ji].imshow(np.reshape(testX[j], (28,28)), cmap='gray')
+#        elif i == 1:
+#            axs[i,ji].imshow(np.reshape(testXn[j], (28,28)), cmap='gray')
+#        else:
+#            axs[i,ji].imshow(np.reshape(out[ji], (28,28)), cmap='gray')
+#
+#plt.show()
+#plt.savefig('recon_noise.jpg')
 
 #plt.imshow(np.reshape(out[0], (28,28)), cmap='gray')
 #plt.show()
