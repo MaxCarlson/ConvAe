@@ -4,6 +4,7 @@ import pandas as pd
 import keras as K
 import matplotlib.pyplot as plt
 from keras import models, layers
+from sklearn.decomposition import PCA
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
@@ -50,8 +51,8 @@ def addNoise(x):
     return ret
 
 # Add gaussian noise
-trainXn = addNoise(trainX)
-testXn = addNoise(testX)
+#trainXn = addNoise(trainX)
+#testXn = addNoise(testX)
 
 #plt.imshow(np.reshape(testX[3], (28,28)), cmap='gray')
 #plt.show()
@@ -116,8 +117,8 @@ stopping = K.callbacks.EarlyStopping(
 
 # Training
 #
-epochs = 500
-batchSize = 4096
+epochs = 120
+batchSize = 2048
 
 #model = K.models.load_model('models/m')
 #model = K.models.load_model('models/noise')
@@ -125,17 +126,19 @@ batchSize = 4096
 #hist = model.fit(trainXn, trainX, batchSize, epochs, validation_data=(testXn, testX), 
 #                 callbacks=[stopping])
 
-hist = model.fit(trainX, trainX, batchSize, epochs, validation_data=(testX, testX), 
-                 callbacks=[stopping])
+#hist = model.fit(trainX, trainX, batchSize, epochs, validation_data=(testX, testX), 
+#                 callbacks=[stopping])
 
-modelEncoded = K.Model(model.input, model.get_layer('encoder').output)
+#modelEncoded = K.Model(model.input, model.get_layer('encoder').output)
 #model.save('models/m')
 #modelEncoded.save('models/m/encoder')
 
 #model.save('models/noise')
 
 
-out = modelEncoded.predict(testX)
+#out = modelEncoded.predict(testX)
+pca = PCA(n_components=2)
+out = pca.fit_transform(np.reshape(testX, (len(testX), 784)))
 
 # Plot encoded representation
 colormap = np.array(['b', 'g', 'r', 'c', 'm', 'y', 'k', 'brown', 'orange', 'pink'])
