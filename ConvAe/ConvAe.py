@@ -62,7 +62,7 @@ x = layers.Conv2D(16, (3, 3),  padding='same')(input)
 x = layers.Activation('relu')(x)
 x = layers.MaxPooling2D((2, 2), padding='same')(x)
 x = layers.BatchNormalization()(x)
-x = layers.Conv2D(8, (3, 3),  padding='same')(x)
+x = layers.Conv2D(16, (3, 3),  padding='same')(x)
 x = layers.Activation('relu')(x)
 x = layers.MaxPooling2D((2, 2), padding='same')(x)
 x = layers.BatchNormalization()(x)
@@ -86,7 +86,7 @@ x = layers.Conv2D(8, (3, 3),  padding='same')(x)
 x = layers.Activation('relu')(x)
 x = layers.BatchNormalization()(x)
 x = layers.UpSampling2D((2, 2))(x)
-x = layers.Conv2D(8, (3, 3),  padding='same')(x)
+x = layers.Conv2D(16, (3, 3),  padding='same')(x)
 x = layers.Activation('relu')(x)
 x = layers.BatchNormalization()(x)
 x = layers.UpSampling2D((2, 2))(x)
@@ -97,7 +97,6 @@ x = layers.UpSampling2D((2, 2))(x)
 decoded = layers.Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
 
 model = K.Model(input, decoded)
-modelEncoded = K.Model(model.input, model.get_layer('encoder').output)
 
 
 model.summary()
@@ -117,8 +116,8 @@ stopping = K.callbacks.EarlyStopping(
 
 # Training
 #
-epochs = 750
-batchSize = 2048
+epochs = 500
+batchSize = 4096
 
 #model = K.models.load_model('models/m')
 #model = K.models.load_model('models/noise')
@@ -129,8 +128,10 @@ batchSize = 2048
 hist = model.fit(trainX, trainX, batchSize, epochs, validation_data=(testX, testX), 
                  callbacks=[stopping])
 
+modelEncoded = K.Model(model.input, model.get_layer('encoder').output)
 #model.save('models/m')
-modelEncoded.save('models/m/encoder')
+#modelEncoded.save('models/m/encoder')
+
 #model.save('models/noise')
 
 
